@@ -9,7 +9,7 @@ import Foundation
 
 extension InjectorV3 {
     fileprivate static let metadataPlistName = "iTunesMetadata.plist"
-    fileprivate static let metadataPlistBackupName = "\(metadataPlistName).bak"
+    fileprivate static let metadataPlistBackupName = "\(metadataPlistName).xx"
 
     // MARK: - Instance Methods
 
