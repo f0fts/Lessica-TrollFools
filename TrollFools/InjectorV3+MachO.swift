@@ -58,7 +58,9 @@ extension InjectorV3 {
         return false
     }
 
-    func linkedDylibsRecursivelyOfMachO(_ target: URL, collected: OrderedSet<URL> = []) throws -> OrderedSet<URL> {
+    func linkedDylibsRecursivelyOfMachO(_ target: URL, collected: OrderedSet<URL> = []) throws
+        -> OrderedSet<URL>
+    {
         if collected.contains(target) {
             return collected
         }
@@ -140,13 +142,17 @@ extension InjectorV3 {
         let machOFile = try MachOKit.loadFromFile(url: target)
         switch machOFile {
         case let .machO(machOFile):
-            if let codeSign = machOFile.codeSign, let teamID = codeSign.codeDirectory?.teamId(in: codeSign) {
+            if let codeSign = machOFile.codeSign,
+                let teamID = codeSign.codeDirectory?.teamId(in: codeSign)
+            {
                 return teamID
             }
         case let .fat(fatFile):
             let machOFiles = try fatFile.machOFiles()
             for machOFile in machOFiles {
-                if let codeSign = machOFile.codeSign, let teamID = codeSign.codeDirectory?.teamId(in: codeSign) {
+                if let codeSign = machOFile.codeSign,
+                    let teamID = codeSign.codeDirectory?.teamId(in: codeSign)
+                {
                     return teamID
                 }
             }
@@ -155,14 +161,21 @@ extension InjectorV3 {
     }
 
     fileprivate func resolveLoadCommand(_ name: String) -> URL? {
-        guard (name.hasPrefix("@rpath/") && !name.hasPrefix("@rpath/libswift")) || name.hasPrefix("@executable_path/") else {
+        guard
+            (name.hasPrefix("@rpath/")
+                && (!name.hasPrefix("@rpath/libswift") || name.hasPrefix("@rpath/libswiftMetal")))
+                || name.hasPrefix("@executable_path/")
+        else {
             return nil
         }
 
         var resolvedName = name
-        resolvedName = resolvedName
-            .replacingOccurrences(of: "@executable_path/", with: executableURL.deletingLastPathComponent().path + "/")
-        resolvedName = resolvedName
+        resolvedName =
+            resolvedName
+            .replacingOccurrences(
+                of: "@executable_path/", with: executableURL.deletingLastPathComponent().path + "/")
+        resolvedName =
+            resolvedName
             .replacingOccurrences(of: "@rpath/", with: frameworksDirectoryURL.path + "/")
 
         let resolvedURL = URL(fileURLWithPath: resolvedName)

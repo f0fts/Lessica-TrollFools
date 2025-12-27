@@ -136,7 +136,7 @@ extension InjectorV3 {
         let dylibURLs = frameworksContentURLs
             .filter {
                 $0.pathExtension.lowercased() == "dylib" &&
-                    !$0.lastPathComponent.hasPrefix("libswift") &&
+                    (!$0.lastPathComponent.hasPrefix("libswift") || $0.lastPathComponent == "libswiftMetal.dylib") &&
                 !Self.ignoredDylibAndFrameworkNames.contains($0.lastPathComponent.lowercased())
             }
             .sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending })
