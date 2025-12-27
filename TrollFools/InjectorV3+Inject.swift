@@ -64,21 +64,33 @@ extension InjectorV3 {
             return
         }
 
+        let isOnlyLibswiftMetal = assetURLs.allSatisfy { $0.lastPathComponent == "libswiftMetal.dylib" }
+
         try assetURLs.forEach {
-            try standardizeLoadCommandDylibToSubstrate($0)
+            if !isOnlyLibswiftMetal {
+                try standardizeLoadCommandDylibToSubstrate($0)
+            }
             try applyCoreTrustBypass($0)
         }
 
-        let substrateFwkURL = try prepareSubstrate()
         guard let targetMachO = try locateAvailableMachO() else {
             DDLogError("All Mach-Os are protected", ddlog: logger)
 
-            throw Error.generic(NSLocalizedString("No eligible framework found.\n\nIt is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”.", comment: ""))
+            throw Error.generic(NSLocalizedString("No eligible framework found.\n\nIt is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can't use TrollFools with apps installed via "Asspp" or tweaks like "NoAppThinning".", comment: ""))
         }
 
         DDLogInfo("Best matched Mach-O is \(targetMachO.path)", ddlog: logger)
 
-        let resourceURLs: [URL] = [substrateFwkURL] + assetURLs
+        let substrateFwkURL: URL?
+        let resourceURLs: [URL]
+        if isOnlyLibswiftMetal {
+            substrateFwkURL = nil
+            resourceURLs = assetURLs
+        } else {
+            substrateFwkURL = try prepareSubstrate()
+            resourceURLs = [substrateFwkURL!] + assetURLs
+        }
+
         try makeAlternate(targetMachO)
         do {
             try copyfiles(resourceURLs)
