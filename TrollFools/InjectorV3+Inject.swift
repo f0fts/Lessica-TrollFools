@@ -76,7 +76,8 @@ extension InjectorV3 {
         guard let targetMachO = try locateAvailableMachO() else {
             DDLogError("All Mach-Os are protected", ddlog: logger)
 
-            throw Error.generic(NSLocalizedString("No eligible framework found.\n\nIt is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can't use TrollFools with apps installed via "Asspp" or tweaks like "NoAppThinning".", comment: ""))
+            throw Error.generic(NSLocalizedString("No eligible framework found.\n\nIt is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”.", comment: ""))
+
         }
 
         DDLogInfo("Best matched Mach-O is \(targetMachO.path)", ddlog: logger)
