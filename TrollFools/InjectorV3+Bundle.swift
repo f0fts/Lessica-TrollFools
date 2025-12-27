@@ -65,24 +65,28 @@ extension InjectorV3 {
         let machOs = linkedDylibs.intersection(enumeratedURLs)
         var sortedMachOs: [URL] =
             switch injectStrategy {
-        case .lexicographic:
-            machOs.sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
-        case .fast:
-            try machOs
-                .sorted { url1, url2 in
-                    let size1 = (try url1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-                    let size2 = (try url2.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-                    return if size1 == size2 {
-                        url1.lastPathComponent.localizedStandardCompare(url2.lastPathComponent) == .orderedAscending
-                    } else {
-                        size1 < size2
-                    }
+            case .lexicographic:
+                machOs.sorted {
+                    $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent)
+                        == .orderedAscending
                 }
-        case .preorder:
-            machOs.elements
-        case .postorder:
-            machOs.reversed()
-        }
+            case .fast:
+                try machOs
+                    .sorted { url1, url2 in
+                        let size1 = (try url1.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+                        let size2 = (try url2.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+                        return if size1 == size2 {
+                            url1.lastPathComponent.localizedStandardCompare(url2.lastPathComponent)
+                                == .orderedAscending
+                        } else {
+                            size1 < size2
+                        }
+                    }
+            case .preorder:
+                machOs.elements
+            case .postorder:
+                machOs.reversed()
+            }
 
         DDLogWarn("Strategy \(injectStrategy.rawValue)", ddlog: logger)
         DDLogInfo("Sorted Mach-Os \(sortedMachOs.map { $0.lastPathComponent })", ddlog: logger)
@@ -99,20 +103,28 @@ extension InjectorV3 {
 
     func injectedAssetURLsInBundle(_ target: URL) -> [URL] {
         return (injectedBundleURLsInBundle(target) + injectedDylibAndFrameworkURLsInBundle(target))
-            .sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending })
+            .sorted(by: {
+                $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent)
+                    == .orderedAscending
+            })
     }
 
     fileprivate func injectedBundleURLsInBundle(_ target: URL) -> [URL] {
         precondition(checkIsBundle(target), "Not a bundle: \(target.path)")
 
-        guard let bundleContentURLs = try? FileManager.default.contentsOfDirectory(at: target, includingPropertiesForKeys: [.isDirectoryKey]) else {
+        guard
+            let bundleContentURLs = try? FileManager.default.contentsOfDirectory(
+                at: target, includingPropertiesForKeys: [.isDirectoryKey])
+        else {
             return []
         }
 
-        let bundleURLs = bundleContentURLs
+        let bundleURLs =
+            bundleContentURLs
             .filter {
-                $0.pathExtension.lowercased() == "bundle" &&
-                !Self.ignoredDylibAndFrameworkNames.contains($0.lastPathComponent.lowercased())
+                $0.pathExtension.lowercased() == "bundle"
+                    && !Self.ignoredDylibAndFrameworkNames.contains(
+                        $0.lastPathComponent.lowercased())
             }
             .filter {
                 (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
@@ -120,7 +132,10 @@ extension InjectorV3 {
             .filter {
                 checkIsInjectedBundle($0)
             }
-            .sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending })
+            .sorted(by: {
+                $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent)
+                    == .orderedAscending
+            })
 
         return bundleURLs
     }
@@ -129,22 +144,33 @@ extension InjectorV3 {
         precondition(checkIsBundle(target), "Not a bundle: \(target.path)")
 
         let frameworksURL = target.appendingPathComponent("Frameworks")
-        guard let frameworksContentURLs = try? FileManager.default.contentsOfDirectory(at: frameworksURL, includingPropertiesForKeys: nil) else {
+        guard
+            let frameworksContentURLs = try? FileManager.default.contentsOfDirectory(
+                at: frameworksURL, includingPropertiesForKeys: nil)
+        else {
             return []
         }
 
-        let dylibURLs = frameworksContentURLs
+        let dylibURLs =
+            frameworksContentURLs
             .filter {
-                $0.pathExtension.lowercased() == "dylib" &&
-                    (!$0.lastPathComponent.hasPrefix("libswift") || $0.lastPathComponent == "libswiftMetal.dylib") &&
-                !Self.ignoredDylibAndFrameworkNames.contains($0.lastPathComponent.lowercased())
+                $0.pathExtension.lowercased() == "dylib"
+                    && (!$0.lastPathComponent.hasPrefix("libswift")
+                        || $0.lastPathComponent == "libswiftMetal.dylib")
+                    && !Self.ignoredDylibAndFrameworkNames.contains(
+                        $0.lastPathComponent.lowercased())
             }
-            .sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending })
+            .sorted(by: {
+                $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent)
+                    == .orderedAscending
+            })
 
-        let frameworkURLs = frameworksContentURLs
+        let frameworkURLs =
+            frameworksContentURLs
             .filter {
-                $0.pathExtension.lowercased() == "framework" &&
-                !Self.ignoredDylibAndFrameworkNames.contains($0.lastPathComponent.lowercased())
+                $0.pathExtension.lowercased() == "framework"
+                    && !Self.ignoredDylibAndFrameworkNames.contains(
+                        $0.lastPathComponent.lowercased())
             }
             .filter {
                 (try? $0.resourceValues(forKeys: [.isDirectoryKey]).isDirectory) ?? false
@@ -152,7 +178,10 @@ extension InjectorV3 {
             .filter {
                 checkIsInjectedBundle($0)
             }
-            .sorted(by: { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending })
+            .sorted(by: {
+                $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent)
+                    == .orderedAscending
+            })
 
         return dylibURLs + frameworkURLs
     }
@@ -176,7 +205,8 @@ extension InjectorV3 {
             }
         } else {
             try filteredURLs.forEach {
-                try Data().write(to: $0.appendingPathComponent(Self.injectedMarkerName), options: .atomic)
+                try Data().write(
+                    to: $0.appendingPathComponent(Self.injectedMarkerName), options: .atomic)
             }
         }
     }
@@ -191,13 +221,22 @@ extension InjectorV3 {
         let infoPlistURL = target.appendingPathComponent(Self.infoPlistName)
         let infoPlistData = try Data(contentsOf: infoPlistURL)
 
-        guard let infoPlist = try PropertyListSerialization.propertyList(from: infoPlistData, options: [], format: nil) as? [String: Any]
+        guard
+            let infoPlist = try PropertyListSerialization.propertyList(
+                from: infoPlistData, options: [], format: nil) as? [String: Any]
         else {
-            throw Error.generic(String(format: NSLocalizedString("Failed to parse: %@", comment: ""), infoPlistURL.path))
+            throw Error.generic(
+                String(
+                    format: NSLocalizedString("Failed to parse: %@", comment: ""), infoPlistURL.path
+                ))
         }
 
         guard let bundleIdentifier = infoPlist["CFBundleIdentifier"] as? String else {
-            throw Error.generic(String(format: NSLocalizedString("Failed to find entry CFBundleIdentifier in: %@", comment: ""), infoPlistURL.path))
+            throw Error.generic(
+                String(
+                    format: NSLocalizedString(
+                        "Failed to find entry CFBundleIdentifier in: %@", comment: ""),
+                    infoPlistURL.path))
         }
 
         return bundleIdentifier
@@ -224,18 +263,30 @@ extension InjectorV3 {
         let infoPlistURL = target.appendingPathComponent(Self.infoPlistName)
         let infoPlistData = try Data(contentsOf: infoPlistURL)
 
-        guard let infoPlist = try PropertyListSerialization.propertyList(from: infoPlistData, options: [], format: nil) as? [String: Any]
+        guard
+            let infoPlist = try PropertyListSerialization.propertyList(
+                from: infoPlistData, options: [], format: nil) as? [String: Any]
         else {
-            throw Error.generic(String(format: NSLocalizedString("Failed to parse: %@", comment: ""), infoPlistURL.path))
+            throw Error.generic(
+                String(
+                    format: NSLocalizedString("Failed to parse: %@", comment: ""), infoPlistURL.path
+                ))
         }
 
         guard let executableName = infoPlist["CFBundleExecutable"] as? String else {
-            throw Error.generic(String(format: NSLocalizedString("Failed to find entry CFBundleExecutable in: %@", comment: ""), infoPlistURL.path))
+            throw Error.generic(
+                String(
+                    format: NSLocalizedString(
+                        "Failed to find entry CFBundleExecutable in: %@", comment: ""),
+                    infoPlistURL.path))
         }
 
         let executableURL = target.appendingPathComponent(executableName)
         guard FileManager.default.fileExists(atPath: executableURL.path) else {
-            throw Error.generic(String(format: NSLocalizedString("Failed to locate main executable: %@", comment: ""), executableURL.path))
+            throw Error.generic(
+                String(
+                    format: NSLocalizedString("Failed to locate main executable: %@", comment: ""),
+                    executableURL.path))
         }
 
         return executableURL
@@ -247,7 +298,10 @@ extension InjectorV3 {
         }
 
         let frameworksURL = target.appendingPathComponent("Frameworks")
-        return !((try? FileManager.default.contentsOfDirectory(at: frameworksURL, includingPropertiesForKeys: nil).isEmpty) ?? true)
+        return
+            !((try? FileManager.default.contentsOfDirectory(
+                at: frameworksURL, includingPropertiesForKeys: nil
+            ).isEmpty) ?? true)
     }
 
     func checkIsInjectedAppBundle(_ target: URL) -> Bool {
@@ -258,7 +312,13 @@ extension InjectorV3 {
         let frameworksURL = target.appendingPathComponent("Frameworks")
         let substrateFwkURL = frameworksURL.appendingPathComponent(Self.substrateFwkName)
 
-        return FileManager.default.fileExists(atPath: substrateFwkURL.path)
+        // Check if CydiaSubstrate.framework exists (traditional injection)
+        if FileManager.default.fileExists(atPath: substrateFwkURL.path) {
+            return true
+        }
+
+        // Check if there are any injected assets (including libswiftMetal.dylib)
+        return !injectedAssetURLsInBundle(target).isEmpty
     }
 
     func checkIsInjectedBundle(_ target: URL) -> Bool {
@@ -275,7 +335,8 @@ extension InjectorV3 {
         let isDirectory = values?.isDirectory ?? false
         let isPackage = values?.isPackage ?? false
         let pathExt = target.pathExtension.lowercased()
-        return isPackage || (isDirectory && (pathExt == "app" || pathExt == "bundle" || pathExt == "framework"))
+        return isPackage
+            || (isDirectory && (pathExt == "app" || pathExt == "bundle" || pathExt == "framework"))
     }
 
     func checkIsDirectory(_ target: URL) -> Bool {
