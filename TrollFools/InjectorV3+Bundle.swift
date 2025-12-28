@@ -26,7 +26,8 @@ extension InjectorV3 {
     static let substrateFwkName = "CydiaSubstrate.framework"
 
     fileprivate static let infoPlistName = "Info.plist"
-    fileprivate static let injectedMarkerName = ".troll-fools"
+//    fileprivate static let injectedMarkerName = ".troll-fools"
+    fileprivate static let injectedMarkerName = ".jmtf"
 
     // MARK: - Instance Methods
 
