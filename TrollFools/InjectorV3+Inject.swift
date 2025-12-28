@@ -66,8 +66,20 @@ extension InjectorV3 {
 
         let isOnlyLibswiftMetal = assetURLs.allSatisfy { $0.lastPathComponent == "libswiftMetal.dylib" }
 
+        // Check if any asset needs substrate (has dependencies on libsubstrate.dylib, etc.)
+        var needsSubstrateFramework = false
+        if !isOnlyLibswiftMetal {
+            for assetURL in assetURLs {
+                if try needsSubstrate(assetURL) {
+                    needsSubstrateFramework = true
+                    break
+                }
+            }
+        }
+
+        // Standardize load commands for assets that need substrate
         try assetURLs.forEach {
-            if !isOnlyLibswiftMetal {
+            if !isOnlyLibswiftMetal && needsSubstrateFramework {
                 try standardizeLoadCommandDylibToSubstrate($0)
             }
             try applyCoreTrustBypass($0)
@@ -87,9 +99,12 @@ extension InjectorV3 {
         if isOnlyLibswiftMetal {
             substrateFwkURL = nil
             resourceURLs = assetURLs
-        } else {
+        } else if needsSubstrateFramework {
             substrateFwkURL = try prepareSubstrate()
             resourceURLs = [substrateFwkURL!] + assetURLs
+        } else {
+            substrateFwkURL = nil
+            resourceURLs = assetURLs
         }
 
         try makeAlternate(targetMachO)
@@ -138,6 +153,23 @@ extension InjectorV3 {
         try cmdChangeOwnerToInstalld(fwkURL, recursively: true)
 
         return fwkURL
+    }
+
+    fileprivate func needsSubstrate(_ assetURL: URL) throws -> Bool {
+        let machO: URL
+        if checkIsBundle(assetURL) {
+            machO = try locateExecutableInBundle(assetURL)
+        } else {
+            machO = assetURL
+        }
+
+        let dylibs = try loadedDylibsOfMachO(machO)
+        for dylib in dylibs {
+            if Self.ignoredDylibAndFrameworkNames.firstIndex(where: { dylib.lowercased().hasSuffix("/\($0)") }) != nil {
+                return true
+            }
+        }
+        return false
     }
 
     fileprivate func standardizeLoadCommandDylibToSubstrate(_ assetURL: URL) throws {
