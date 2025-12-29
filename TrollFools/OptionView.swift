@@ -134,6 +134,7 @@ struct OptionView: View {
             allowedContentTypes: [
                 .init(filenameExtension: "dylib")!,
                 .init(filenameExtension: "deb")!,
+                .init(filenameExtension: "txx")!,
                 .bundle,
                 .framework,
                 .package,

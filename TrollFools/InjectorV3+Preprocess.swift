@@ -26,13 +26,13 @@ extension InjectorV3 {
 
         for assetURL in assetURLs {
             let lowerExt = assetURL.pathExtension.lowercased()
-            if lowerExt == "zip" || lowerExt == "deb" {
+            if lowerExt == "zip" || lowerExt == "txx" || lowerExt == "deb" {
                 let extractedURL = temporaryDirectoryURL
                     .appendingPathComponent("\(UUID().uuidString)_\(assetURL.lastPathComponent)")
                     .appendingPathExtension("extracted")
 
                 try FileManager.default.createDirectory(at: extractedURL, withIntermediateDirectories: true)
-                if lowerExt == "zip" {
+                if lowerExt == "zip" || lowerExt == "txx" {
                     try FileManager.default.unzipItem(at: assetURL, to: extractedURL)
                 } else {
                     try extractDebianPackage(at: assetURL, to: extractedURL)
