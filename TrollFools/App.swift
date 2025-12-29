@@ -18,12 +18,13 @@ final class App: ObservableObject {
     let version: String?
     let isAdvertisement: Bool
 
-    @Published var isDetached: Bool
-    @Published var isAllowedToAttachOrDetach: Bool
-    @Published var isInjected: Bool
-    @Published var hasPersistedAssets: Bool
+    @Published var isDetached: Bool = false
+    @Published var isAllowedToAttachOrDetach: Bool = false
+    @Published var isInjected: Bool = false
+    @Published var hasPersistedAssets: Bool = false
 
-    lazy var icon: UIImage? = UIImage._applicationIconImage(forBundleIdentifier: bid, format: 0, scale: 3.0)
+    lazy var icon: UIImage? = UIImage._applicationIconImage(
+        forBundleIdentifier: bid, format: 0, scale: 3.0)
     var alternateIcon: UIImage?
 
     lazy var isUser: Bool = type == "User"
@@ -35,6 +36,7 @@ final class App: ObservableObject {
     weak var appList: AppListModel?
     private var cancellables: Set<AnyCancellable> = []
     private static let reloadSubject = PassthroughSubject<String, Never>()
+    private var statusLoaded = false
 
     init(
         bid: String,
@@ -52,23 +54,45 @@ final class App: ObservableObject {
         self.teamID = teamID
         self.url = url
         self.version = version
-        self.isDetached = InjectorV3.main.isMetadataDetachedInBundle(url)
-        self.isAllowedToAttachOrDetach = type == "User" && InjectorV3.main.isAllowedToAttachOrDetachMetadataInBundle(url)
-        self.isInjected = InjectorV3.main.checkIsInjectedAppBundle(url)
-        self.hasPersistedAssets = InjectorV3.main.hasPersistedAssets(bid: bid)
         self.alternateIcon = alternateIcon
         self.isAdvertisement = isAdvertisement
-        self.latinName = name
-            .applyingTransform(.toLatin, reverse: false)?
-            .applyingTransform(.stripDiacritics, reverse: false)?
-            .components(separatedBy: .whitespaces)
-            .joined() ?? ""
+        self.latinName =
+            name.applyingTransform(.toLatin, reverse: false)?.applyingTransform(
+                .stripDiacritics, reverse: false)?.components(separatedBy: .whitespaces).joined()
+            ?? ""
         Self.reloadSubject
             .filter { $0 == bid }
             .sink { [weak self] _ in
                 self?._reload()
             }
             .store(in: &cancellables)
+
+        // Load status asynchronously to avoid blocking initialization
+        loadStatusAsync()
+    }
+
+    private func loadStatusAsync() {
+        guard !statusLoaded else { return }
+        statusLoaded = true
+
+        // Load status on background queue
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+
+            let isDetached = InjectorV3.main.isMetadataDetachedInBundle(self.url)
+            let isAllowedToAttachOrDetach =
+                self.type == "User"
+                && InjectorV3.main.isAllowedToAttachOrDetachMetadataInBundle(self.url)
+            let isInjected = InjectorV3.main.checkIsInjectedAppBundle(self.url)
+            let hasPersistedAssets = InjectorV3.main.hasPersistedAssets(bid: self.bid)
+
+            DispatchQueue.main.async {
+                self.isDetached = isDetached
+                self.isAllowedToAttachOrDetach = isAllowedToAttachOrDetach
+                self.isInjected = isInjected
+                self.hasPersistedAssets = hasPersistedAssets
+            }
+        }
     }
 
     func reload() {
@@ -81,12 +105,12 @@ final class App: ObservableObject {
     }
 
     private func reloadDetachedStatus() {
-        self.isDetached = InjectorV3.main.isMetadataDetachedInBundle(url)
-        self.isAllowedToAttachOrDetach = isUser && InjectorV3.main.isAllowedToAttachOrDetachMetadataInBundle(url)
+        statusLoaded = false
+        loadStatusAsync()
     }
 
     private func reloadInjectedStatus() {
-        self.isInjected = InjectorV3.main.checkIsInjectedAppBundle(url)
-        self.hasPersistedAssets = InjectorV3.main.hasPersistedAssets(bid: bid)
+        statusLoaded = false
+        loadStatusAsync()
     }
 }

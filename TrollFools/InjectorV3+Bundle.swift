@@ -318,7 +318,49 @@ extension InjectorV3 {
             return true
         }
 
-        // Check if there are any injected assets (including libswiftMetal.dylib)
+        // Quick check: look for injected marker in the main bundle first
+        let markerURL = target.appendingPathComponent(Self.injectedMarkerName)
+        if FileManager.default.fileExists(atPath: markerURL.path) {
+            return true
+        }
+
+        // Quick check: look for injected dylibs in Frameworks directory
+        // This is faster than full traversal
+        guard let frameworksContentURLs = try? FileManager.default.contentsOfDirectory(
+            at: frameworksURL, includingPropertiesForKeys: [.isDirectoryKey]
+        ) else {
+            return false
+        }
+
+        // Check for injected dylibs (excluding libswift* except libswiftMetal.dylib)
+        for url in frameworksContentURLs {
+            let pathExt = url.pathExtension.lowercased()
+            if pathExt == "dylib" {
+                let fileName = url.lastPathComponent
+                if fileName == "libswiftMetal.dylib" {
+                    return true
+                }
+                if !fileName.hasPrefix("libswift") && !Self.ignoredDylibAndFrameworkNames.contains(fileName.lowercased()) {
+                    // Found a non-system dylib, likely injected
+                    return true
+                }
+            } else if pathExt == "framework" {
+                // Check if framework has injected marker
+                let frameworkMarkerURL = url.appendingPathComponent(Self.injectedMarkerName)
+                if FileManager.default.fileExists(atPath: frameworkMarkerURL.path) {
+                    return true
+                }
+            } else if pathExt == "bundle" {
+                // Check if bundle has injected marker
+                let bundleMarkerURL = url.appendingPathComponent(Self.injectedMarkerName)
+                if FileManager.default.fileExists(atPath: bundleMarkerURL.path) {
+                    return true
+                }
+            }
+        }
+
+        // Fallback to full check only if quick checks didn't find anything
+        // This should rarely be needed
         return !injectedAssetURLsInBundle(target).isEmpty
     }
 
