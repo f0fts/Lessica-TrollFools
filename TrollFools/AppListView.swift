@@ -102,7 +102,14 @@ struct AppListView: View {
             .animation(.easeOut, value: appList.activeScopeApps.keys)
             .sheet(item: $selectorOpenedURL) { urlWrapper in
                 AppListView()
-                    .environmentObject(AppListModel(selectorURL: urlWrapper.url))
+                    .environmentObject({
+                        let model = AppListModel(selectorURL: urlWrapper.url)
+                        // Ensure app list is loaded
+                        if model.activeScopeApps.isEmpty {
+                            model.reload()
+                        }
+                        return model
+                    }())
             }
             .onOpenURL { url in
                 let ext = url.pathExtension.lowercased()
@@ -110,6 +117,11 @@ struct AppListView: View {
                       ext == "dylib" || ext == "deb" || ext == "zip" || ext == "txx"
                 else {
                     return
+                }
+
+                // Ensure app list is loaded before showing selector
+                if appList.activeScopeApps.isEmpty {
+                    appList.reload()
                 }
 
                 let urlIdent = URLIdentifiable(url: preprocessURL(url))
@@ -121,7 +133,10 @@ struct AppListView: View {
                     }
                 }
 
-                selectorOpenedURL = urlIdent
+                // Small delay to ensure app list is ready
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    selectorOpenedURL = urlIdent
+                }
             }
             .onAppear {
                 if Double.random(in: 0 ..< 1) < 0.1 {

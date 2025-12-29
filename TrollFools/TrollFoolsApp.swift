@@ -30,6 +30,12 @@ struct TrollFoolsApp: SwiftUI.App {
                 }
             }
             .animation(.easeInOut, value: isDisclaimerHidden)
+            .onOpenURL { url in
+                // Ensure disclaimer is hidden when opening file from external app
+                if !isDisclaimerHidden {
+                    isDisclaimerHidden = true
+                }
+            }
         }
     }
 }

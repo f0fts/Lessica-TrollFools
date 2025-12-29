@@ -39,7 +39,11 @@
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>public.zip-archive</string>
+				<string>com.trollfools.txx-archive</string>
+			</array>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>txx</string>
 			</array>
 		</dict>
 		<dict>
