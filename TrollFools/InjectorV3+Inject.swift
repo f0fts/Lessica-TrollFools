@@ -86,16 +86,24 @@ extension InjectorV3 {
         }
 
         let candidateMachOs = try frameworkMachOsInBundle(bundleURL)
-        guard let targetMachO = try candidateMachOs.first(where: { try !isProtectedMachO($0) }) else {
+        let targetMachO: URL
+        if let availableMachO = try candidateMachOs.first(where: { try !isProtectedMachO($0) }) {
+            targetMachO = availableMachO
+        } else {
             let protectedNames = candidateMachOs.map(\.lastPathComponent).joined(separator: ", ")
             DDLogError("All candidate Mach-Os are cryptid protected: \(protectedNames)", ddlog: logger)
 
-            throw Error.generic(String(
-                format: NSLocalizedString(
-                    "No eligible framework found.\n\nAll candidate Mach-Os (including the main executable) are protected by cryptid: %@.\n\nThis is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”.",
-                    comment: ""),
-                protectedNames.isEmpty ? "N/A" : protectedNames
-            ))
+            let mainExecutable = try locateExecutableInBundle(bundleURL)
+            let mainExecutableProtected = (try? isProtectedMachO(mainExecutable)) ?? true
+
+            DDLogWarn("Falling back to main executable for load command injection: \(mainExecutable.path)", ddlog: logger)
+            DDLogWarn("Main executable cryptid protected: \(mainExecutableProtected)", ddlog: logger)
+
+            if mainExecutableProtected {
+                DDLogError("Force fallback may fail because main executable is protected", ddlog: logger)
+            }
+
+            targetMachO = mainExecutable
         }
 
         DDLogInfo("Best matched Mach-O is \(targetMachO.path)", ddlog: logger)
@@ -121,6 +129,7 @@ extension InjectorV3 {
             }
             try applyCoreTrustBypass(targetMachO)
         } catch {
+            DDLogError("Failed to inject load commands into target Mach-O: \(targetMachO.path), error: \(error)", ddlog: logger)
             try? restoreAlternate(targetMachO)
             try? batchRemove(resourceURLs)
             throw error
