@@ -17,6 +17,7 @@ final class App: ObservableObject {
     let url: URL
     let version: String?
     let isAdvertisement: Bool
+    let isEligible: Bool
 
     @Published var isDetached: Bool = false
     @Published var isAllowedToAttachOrDetach: Bool = false
@@ -46,7 +47,8 @@ final class App: ObservableObject {
         url: URL,
         version: String? = nil,
         alternateIcon: UIImage? = nil,
-        isAdvertisement: Bool = false
+        isAdvertisement: Bool = false,
+        isEligible: Bool = true
     ) {
         self.bid = bid
         self.name = name
@@ -56,6 +58,7 @@ final class App: ObservableObject {
         self.version = version
         self.alternateIcon = alternateIcon
         self.isAdvertisement = isAdvertisement
+        self.isEligible = isEligible
         self.latinName =
             name.applyingTransform(.toLatin, reverse: false)?.applyingTransform(
                 .stripDiacritics, reverse: false)?.components(separatedBy: .whitespaces).joined()

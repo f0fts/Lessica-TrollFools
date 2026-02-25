@@ -52,6 +52,7 @@ final class AppListModel: ObservableObject {
 
     @Published var filter = FilterOptions()
     @Published var activeScope: Scope = .all
+    @Published var filteredApps: [App] = []
     @Published var activeScopeApps: OrderedDictionary<String, [App]> = [:]
 
     @Published var unsupportedCount: Int = 0
@@ -131,16 +132,20 @@ final class AppListModel: ObservableObject {
             filteredApplications = filteredApplications.filter { $0.isInjected || $0.hasPersistedAssets }
         }
 
+        let scopeFilteredApps: [App]
         switch activeScope {
         case .all:
-            activeScopeApps = Self.groupedAppList(filteredApplications)
+            scopeFilteredApps = filteredApplications
         case .user:
-            activeScopeApps = Self.groupedAppList(filteredApplications.filter { $0.isUser })
+            scopeFilteredApps = filteredApplications.filter { $0.isUser }
         case .troll:
-            activeScopeApps = Self.groupedAppList(filteredApplications.filter { $0.isFromTroll })
+            scopeFilteredApps = filteredApplications.filter { $0.isFromTroll }
         case .system:
-            activeScopeApps = Self.groupedAppList(filteredApplications.filter { $0.isFromApple })
+            scopeFilteredApps = filteredApplications.filter { $0.isFromApple }
         }
+
+        filteredApps = scopeFilteredApps
+        activeScopeApps = Self.groupedAppList(scopeFilteredApps)
     }
 
     private static let excludedIdentifiers: Set<String> = [
@@ -171,13 +176,15 @@ final class AppListModel: ObservableObject {
                 }
 
                 let shortVersionString: String? = proxy.shortVersionString()
+                let isEligible = appType != "User" || InjectorV3.main.checkIsEligibleAppBundle(url)
                 let app = App(
                     bid: id,
                     name: localizedName,
                     type: appType,
                     teamID: teamID,
                     url: url,
-                    version: shortVersionString
+                    version: shortVersionString,
+                    isEligible: isEligible
                 )
 
                 if app.isUser && app.isFromApple {
@@ -191,13 +198,12 @@ final class AppListModel: ObservableObject {
                 return app
             }
 
-        let filteredApps = allApps
-            .filter { $0.isSystem || InjectorV3.main.checkIsEligibleAppBundle($0.url) }
+        let sortedApps = allApps
             .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
 
-        unsupportedCount = allApps.count - filteredApps.count
+        unsupportedCount = sortedApps.filter { !$0.isSystem && !$0.isEligible }.count
 
-        return filteredApps
+        return sortedApps
     }
 }
 

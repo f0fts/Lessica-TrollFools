@@ -65,10 +65,22 @@ struct AppListCell: View {
                             .accessibilityLabel(app.isInjected ? NSLocalizedString("Patched", comment: "") : NSLocalizedString("Includes Disabled PlugIns", comment: ""))
                             .transition(.opacity)
                     }
+
+                    if !app.isEligible && !app.isAdvertisement {
+                        Text(NSLocalizedString("Unsupported", comment: ""))
+                            .font(.caption2)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.red.opacity(0.15))
+                            .foregroundColor(.red)
+                            .clipShape(Capsule())
+                            .transition(.opacity)
+                    }
                 }
                 .animation(.easeOut, value: combines(
                     app.isInjected,
-                    app.hasPersistedAssets
+                    app.hasPersistedAssets,
+                    app.isEligible
                 ))
 
                 if #available(iOS 15, *) {
