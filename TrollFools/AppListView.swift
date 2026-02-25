@@ -379,22 +379,13 @@ struct AppListView: View {
     func appSection(forKey sectionKey: String) -> some View {
         Section {
             ForEach(appList.activeScopeApps[sectionKey] ?? [], id: \.bid) { app in
-                if app.isEligible {
-                    NavigationLink {
-                        if appList.isSelectorMode, let selectorURL = appList.selectorURL {
-                            InjectView(app, urlList: [selectorURL])
-                        } else {
-                            OptionView(app)
-                        }
-                    } label: {
-                        if #available(iOS 16, *) {
-                            AppListCell(app: app)
-                        } else {
-                            AppListCell(app: app)
-                                .padding(.vertical, 4)
-                        }
+                NavigationLink {
+                    if appList.isSelectorMode, let selectorURL = appList.selectorURL {
+                        InjectView(app, urlList: [selectorURL])
+                    } else {
+                        OptionView(app)
                     }
-                } else {
+                } label: {
                     if #available(iOS 16, *) {
                         AppListCell(app: app)
                     } else {
