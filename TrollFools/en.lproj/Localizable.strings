@@ -185,6 +185,9 @@
 "No eligible framework found.\n\nIt is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”." = "No eligible framework found.\n\nIt is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”.";
 
 /* No comment provided by engineer. */
+"No eligible framework found.\n\nAll candidate Mach-Os (including the main executable) are protected by cryptid: %@.\n\nThis is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”." = "No eligible framework found.\n\nAll candidate Mach-Os (including the main executable) are protected by cryptid: %@.\n\nThis is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”.";
+
+/* No comment provided by engineer. */
 "No Injected Plug-Ins" = "No Injected Plug-Ins";
 
 /* No comment provided by engineer. */

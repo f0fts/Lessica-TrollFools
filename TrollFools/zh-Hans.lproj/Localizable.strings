@@ -185,6 +185,9 @@
 "No eligible framework found.\n\nIt is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”." = "没有找到符合条件的框架。\n\n通常情况下，这不是 TrollFools 自身的问题，而是目标应用程序的问题。你可能需要从 App Store 重新安装该应用。你不能在通过 “爱啪思道” 或 “NoAppThinning” 等方式安装的应用程序上使用 TrollFools。";
 
 /* No comment provided by engineer. */
+"No eligible framework found.\n\nAll candidate Mach-Os (including the main executable) are protected by cryptid: %@.\n\nThis is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”." = "没有找到符合条件的框架。\n\n所有候选 Mach-O（包括主可执行文件）都被 cryptid 保护：%@。\n\n通常情况下，这不是 TrollFools 自身的问题，而是目标应用程序的问题。你可能需要从 App Store 重新安装该应用。你不能在通过 “爱啪思道” 或 “NoAppThinning” 等方式安装的应用程序上使用 TrollFools。";
+
+/* No comment provided by engineer. */
 "No Injected Plug-Ins" = "没有已注入的插件";
 
 /* No comment provided by engineer. */

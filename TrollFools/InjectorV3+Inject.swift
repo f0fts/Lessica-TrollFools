@@ -85,11 +85,17 @@ extension InjectorV3 {
             try applyCoreTrustBypass($0)
         }
 
-        guard let targetMachO = try locateAvailableMachO() else {
-            DDLogError("All Mach-Os are protected", ddlog: logger)
+        let candidateMachOs = try frameworkMachOsInBundle(bundleURL)
+        guard let targetMachO = try candidateMachOs.first(where: { try !isProtectedMachO($0) }) else {
+            let protectedNames = candidateMachOs.map(\.lastPathComponent).joined(separator: ", ")
+            DDLogError("All candidate Mach-Os are cryptid protected: \(protectedNames)", ddlog: logger)
 
-            throw Error.generic(NSLocalizedString("No eligible framework found.\n\nIt is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”.", comment: ""))
-
+            throw Error.generic(String(
+                format: NSLocalizedString(
+                    "No eligible framework found.\n\nAll candidate Mach-Os (including the main executable) are protected by cryptid: %@.\n\nThis is usually not a bug with TrollFools itself, but rather with the target app. You may re-install that from App Store. You can’t use TrollFools with apps installed via “Asspp” or tweaks like “NoAppThinning”.",
+                    comment: ""),
+                protectedNames.isEmpty ? "N/A" : protectedNames
+            ))
         }
 
         DDLogInfo("Best matched Mach-O is \(targetMachO.path)", ddlog: logger)
